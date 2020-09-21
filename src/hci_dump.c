@@ -30,7 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
+ * Please inquire about commercial licensing options at
  * contact@bluekitchen-gmbh.com
  *
  */
@@ -62,14 +62,14 @@
 
 #ifdef HAVE_POSIX_FILE_IO
 #include <fcntl.h>        // open
-#include <unistd.h>       // write 
+#include <unistd.h>       // write
 #include <time.h>
 #include <sys/time.h>     // for timestamps
 #include <sys/stat.h>     // for mode flags
 #endif
 
 #ifdef ENABLE_SEGGER_RTT
-#include "SEGGER_RTT.h"
+#include <segger/rtt/SEGGER_RTT.h>
 
 // allow to configure mode, channel, up buffer size in btstack_config.h for binary HCI formats (PacketLogger/BlueZ)
 
@@ -155,7 +155,7 @@ void hci_dump_open(const char *filename, hci_dump_format_t format){
             break;
     }
 #endif
-    
+
     dump_file = 1;
 #endif
 }
@@ -230,7 +230,7 @@ static void printf_packet(uint8_t packet_type, uint8_t in, uint8_t * packet, uin
         default:
             return;
     }
-    printf_hexdump(packet, len);  
+    printf_hexdump(packet, len);
 }
 
 static void printf_timestamp(void){
@@ -257,7 +257,7 @@ static void printf_timestamp(void){
 
     uint16_t p_ms      = time_ms - (seconds * 1000u);
     uint16_t p_seconds = seconds - (minutes * 60);
-    uint16_t p_minutes = minutes - (hours   * 60u);     
+    uint16_t p_minutes = minutes - (hours   * 60u);
     printf("[%02u:%02u:%02u.%03u] ", hours, p_minutes, p_seconds, p_ms);
 #endif
 }
@@ -288,7 +288,7 @@ void hci_dump_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t 
     if (dump_format == HCI_DUMP_STDOUT){
         printf_timestamp();
         printf_packet(packet_type, in, packet, len);
-        return;        
+        return;
     }
 
     uint32_t tv_sec = 0;

@@ -30,7 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
+ * Please inquire about commercial licensing options at
  * contact@bluekitchen-gmbh.com
  *
  */
@@ -114,26 +114,32 @@ static uint32_t btstack_run_loop_freertos_get_time_ms(void){
 // set timer
 static void btstack_run_loop_freertos_set_timer(btstack_timer_source_t *ts, uint32_t timeout_in_ms){
     ts->timeout = btstack_run_loop_freertos_get_time_ms() + timeout_in_ms + 1;
+    btstack_run_loop_freertos_trigger();
+
 }
 
 /**
  * Add timer to run_loop (keep list sorted)
  */
-static void btstack_run_loop_freertos_add_timer(btstack_timer_source_t *ts){
+static void btstack_run_loop_freertos_add_timer(btstack_timer_source_t *ts)
+{
     btstack_linked_item_t *it;
-    for (it = (btstack_linked_item_t *) &timers; it->next ; it = it->next){
+    for (it = (btstack_linked_item_t *)&timers; it->next; it = it->next) {
         // don't add timer that's already in there
-        btstack_timer_source_t * next = (btstack_timer_source_t *) it->next;
-        if (next == ts){
-            log_error( "btstack_run_loop_timer_add error: timer to add already in list!");
+        btstack_timer_source_t *next = (btstack_timer_source_t *)it->next;
+        if (next == ts) {
+            log_error("btstack_run_loop_timer_add error: timer to add already in list!");
             return;
         }
         // exit if new timeout before list timeout
         int32_t delta = btstack_time_delta(ts->timeout, next->timeout);
-        if (delta < 0) break;
+        if (delta < 0)
+            break;
     }
     ts->item.next = it->next;
-    it->next = (btstack_linked_item_t *) ts;
+    it->next      = (btstack_linked_item_t *)ts;
+    log_debug("timer added: %s", ts->process);
+    btstack_run_loop_freertos_trigger();
 }
 
 /**
@@ -144,7 +150,7 @@ static bool btstack_run_loop_freertos_remove_timer(btstack_timer_source_t *ts){
 }
 
 static void btstack_run_loop_freertos_dump_timer(void){
-#ifdef ENABLE_LOG_INFO 
+#ifdef ENABLE_LOG_INFO
     btstack_linked_item_t *it;
     int i = 0;
     for (it = (btstack_linked_item_t *) timers; it ; it = it->next){
@@ -217,7 +223,7 @@ void btstack_run_loop_freertos_trigger_exit(void){
  */
 static void btstack_run_loop_freertos_execute(void) {
     log_debug("RL: execute");
-    
+
     run_loop_exit_requested = false;
 
     while (true) {
@@ -231,7 +237,6 @@ static void btstack_run_loop_freertos_execute(void) {
                 ds->process(ds, DATA_SOURCE_CALLBACK_POLL);
             }
         }
-
         // process registered function calls on run loop thread
         while (true){
             function_call_t message = { NULL, NULL };
@@ -243,7 +248,7 @@ static void btstack_run_loop_freertos_execute(void) {
         }
 
         // process timers and get next timeout
-        uint32_t timeout_ms = portMAX_DELAY;
+        uint32_t timeout_ms = 1000; // TODO: fix portMAX_DELAY trigger issue
         log_debug("RL: portMAX_DELAY %u", portMAX_DELAY);
         while (timers) {
             btstack_timer_source_t * ts = (btstack_timer_source_t *) timers;

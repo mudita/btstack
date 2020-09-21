@@ -30,7 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
+ * Please inquire about commercial licensing options at
  * contact@bluekitchen-gmbh.com
  *
  */
@@ -38,11 +38,12 @@
 /*
  *  btstack_debug.h
  *
- *  allow to funnel debug & error messages 
+ *  allow to funnel debug & error messages
  */
 
 #ifndef DEBUG_H
 #define DEBUG_H
+#include <inttypes.h>
 
 #include "btstack_config.h"
 #include "btstack_defines.h"
@@ -90,8 +91,11 @@ void btstack_assert_failed(const char * file, uint16_t line_nr);
 
 #ifdef __AVR__
 #define HCI_DUMP_LOG(log_level, format, ...) hci_dump_log_P(log_level, PSTR("%s.%u: " format), BTSTACK_FILE__, __LINE__, ## __VA_ARGS__)
+#elif defined(ENABLE_USER_LOG)
+void bt_log_custom(const char* file, int line, const char* foo, const char* fmt, ...);
+#define HCI_DUMP_LOG(log_level, format, ...) bt_log_custom(BTSTACK_FILE__, __LINE__,__func__, "[%d] " format, log_level, ##__VA_ARGS__)
 #else
-#define HCI_DUMP_LOG(log_level, format, ...) hci_dump_log(log_level, "%s.%u: " format, BTSTACK_FILE__, __LINE__, ## __VA_ARGS__)
+#define HCI_DUMP_LOG(log_level, format, ...) hci_dump_log(log_level, "%s.%f: " format, BTSTACK_FILE__, (float)__LINE__, ## __VA_ARGS__)
 #endif
 
 #ifdef ENABLE_LOG_DEBUG
@@ -112,7 +116,7 @@ void btstack_assert_failed(const char * file, uint16_t line_nr);
 #define log_error(...) (void)(0)
 #endif
 
-/** 
+/**
  * @brief Log Security Manager key via log_info
  * @param key to log
  */

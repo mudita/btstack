@@ -40,7 +40,7 @@
  *  btstack_chipset_cc256x.c
  *
  *  Adapter to use cc256x-based chipsets with BTstack
- *  
+ *
  *  Handles init script (a.k.a. Service Patch)
  *  Allows for non-standard UART baud rate
  *  Allows to configure transmit power
@@ -49,11 +49,11 @@
  *  Issues with mspgcc LTS:
  *  - 20 bit support is not there yet -> .text cannot get bigger than 48 kb
  *  - arrays cannot have more than 32k entries
- * 
+ *
  *  workarounds:
- *  - store init script in .fartext and use assembly code to read from there 
+ *  - store init script in .fartext and use assembly code to read from there
  *  - split into two arrays
- *  
+ *
  * Issues with AVR
  *  - Harvard architecture doesn't allow to store init script directly -> use avr-libc helpers
  *
@@ -67,7 +67,7 @@
 #include "hci.h"
 
 #include <stddef.h>   /* NULL */
-#include <stdio.h> 
+#include <stdio.h>
 #include <string.h>   /* memcpy */
 
 // assert outgoing and incoming hci packet buffers can hold max hci command resp. event packet
@@ -122,11 +122,11 @@ static const uint8_t hci_route_sco_over_hci[] = {
 #else
     // Configure SCO via I2S interface - 256 kbps
     // Send_HCI_VS_Write_CODEC_Config 0xFD06,
-    0x06, 0xfd, 
+    0x06, 0xfd,
     // len
     34,
     //3072, - clock rate 3072000 hz
-    0x00, 0x01, 
+    0x00, 0x01,
     // 0x00 - clock direction: output = master
     0x00,
     // 8000, framesync frequency in hz
@@ -278,8 +278,8 @@ static void update_set_power_vector(uint8_t *hci_cmd_buffer){
 
         if (power_db > DB_MIN_LEVEL) continue;
 
-        power_db = DB_MIN_LEVEL;    // b) 
-    } 
+        power_db = DB_MIN_LEVEL;    // b)
+    }
 }
 
 // max permitted power for class 2 devices: 4 dBm
@@ -293,7 +293,7 @@ static void update_set_class2_single_power(uint8_t * hci_cmd_buffer){
 
 // eHCILL activate from http://e2e.ti.com/support/low_power_rf/f/660/p/134855/484776.aspx
 static void update_sleep_mode_configurations(uint8_t * hci_cmd_buffer){
-#ifdef ENABLE_EHCILL  
+#ifdef ENABLE_EHCILL
     hci_cmd_buffer[4] = 1;
 #else
     hci_cmd_buffer[4] = 0;
@@ -327,18 +327,19 @@ static btstack_chipset_result_t chipset_next_command(uint8_t * hci_cmd_buffer){
         if (init_send_route_sco_over_hci){
             init_send_route_sco_over_hci = 0;
             memcpy(hci_cmd_buffer, hci_route_sco_over_hci, sizeof(hci_route_sco_over_hci));
+            log_info("Sending SCO over HCI command");
             return BTSTACK_CHIPSET_VALID_COMMAND;
         }
 #endif
 
         return BTSTACK_CHIPSET_DONE;
     }
-    
+
     // extracted init script has 0x01 cmd packet type, but BTstack expects them without
     init_script_offset++;
 
 #if defined(__GNUC__) && defined(__MSP430X__) && (__MSP430X__ > 0)
-    
+
     // workaround: use FlashReadBlock with 32-bit integer and assume init script starts at 0x10000
     uint32_t init_script_addr = 0x10000;
     FlashReadBlock(&hci_cmd_buffer[0], init_script_addr + init_script_offset, 3);  // cmd header
@@ -354,7 +355,7 @@ static btstack_chipset_result_t chipset_next_command(uint8_t * hci_cmd_buffer){
     int payload_len = hci_cmd_buffer[2];
     memcpy_P(&hci_cmd_buffer[3], &init_script[init_script_offset], payload_len);
 
-#else    
+#else
 
     // use memcpy with pointer
     uint8_t * init_script_ptr = (uint8_t*) &init_script[0];
@@ -367,10 +368,10 @@ static btstack_chipset_result_t chipset_next_command(uint8_t * hci_cmd_buffer){
 
     init_script_offset += payload_len;
 
-    // control power commands and ehcill 
+    // control power commands and ehcill
     update_init_script_command(hci_cmd_buffer);
 
-    return BTSTACK_CHIPSET_VALID_COMMAND; 
+    return BTSTACK_CHIPSET_VALID_COMMAND;
 }
 
 

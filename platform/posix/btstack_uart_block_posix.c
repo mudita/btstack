@@ -30,7 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
+ * Please inquire about commercial licensing options at
  * contact@bluekitchen-gmbh.com
  *
  */
@@ -83,7 +83,7 @@ static int btstack_uart_posix_init(const btstack_uart_config_t * config){
 }
 
 static void btstack_uart_posix_process_write(btstack_data_source_t *ds) {
-    
+
     if (write_bytes_len == 0) return;
 
     uint32_t start = btstack_run_loop_get_time_ms();
@@ -128,7 +128,7 @@ static void btstack_uart_posix_process_read(btstack_data_source_t *ds) {
     }
 
     uint32_t start = btstack_run_loop_get_time_ms();
-    
+
     // read up to bytes_to_read data in
     ssize_t bytes_read = read(ds->source.fd, read_bytes_data, read_bytes_len);
     // log_info("btstack_uart_posix_process_read need %u bytes, got %d", read_bytes_len, (int) bytes_read);
@@ -141,14 +141,14 @@ static void btstack_uart_posix_process_read(btstack_data_source_t *ds) {
         return;
     }
     if (bytes_read < 0) {
-        log_error("read returned error\n");
+        log_error("read returned error %s\n", strerror(errno));
         return;
     }
 
     read_bytes_len   -= bytes_read;
     read_bytes_data  += bytes_read;
     if (read_bytes_len > 0) return;
-    
+
     btstack_run_loop_disable_data_source_callbacks(ds, DATA_SOURCE_CALLBACK_READ);
 
     if (block_received){
@@ -198,7 +198,7 @@ static int btstack_uart_posix_set_baudrate(uint32_t baudrate){
         log_error("btstack_uart_posix_set_baudrate: Couldn't get term attributes");
         return -1;
     }
-    
+
     speed_t brate = baudrate; // let you override switch below if needed
     switch(baudrate) {
         case    9600: brate=B9600;    break;
@@ -325,12 +325,12 @@ static int btstack_uart_posix_open(void){
         log_error("Unable to open port %s", device_name);
         return -1;
     }
-    
+
     if (tcgetattr(fd, &toptions) < 0) {
         log_error("Couldn't get term attributes");
         return -1;
     }
-    
+
     cfmakeraw(&toptions);   // make raw
 
     // 8N1
@@ -339,11 +339,11 @@ static int btstack_uart_posix_open(void){
 
     toptions.c_cflag |= CREAD | CLOCAL;  // turn on READ & ignore ctrl lines
     toptions.c_iflag &= ~(IXON | IXOFF | IXANY); // turn off s/w flow ctrl
-    
+
     // see: http://unixwiz.net/techtips/termios-vmin-vtime.html
     toptions.c_cc[VMIN]  = 1;
     toptions.c_cc[VTIME] = 0;
-    
+
     // no parity
     btstack_uart_posix_set_parity_option(&toptions, 0);
 
@@ -357,7 +357,7 @@ static int btstack_uart_posix_open(void){
 
     // store fd in data source
     transport_data_source.source.fd = fd;
-    
+
     // also set baudrate
     if (btstack_uart_posix_set_baudrate(baudrate) < 0){
         return -1;
@@ -372,14 +372,14 @@ static int btstack_uart_posix_open(void){
     usleep(100000);
 
     return 0;
-} 
+}
 
 static int btstack_uart_posix_close_new(void){
 
     // first remove run loop handler
     btstack_run_loop_remove_data_source(&transport_data_source);
-    
-    // then close device 
+
+    // then close device
     close(transport_data_source.source.fd);
     transport_data_source.source.fd = -1;
     return 0;

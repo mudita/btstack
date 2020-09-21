@@ -30,7 +30,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
+ * Please inquire about commercial licensing options at
  * contact@bluekitchen-gmbh.com
  *
  */
@@ -71,6 +71,10 @@
 #include "lwip/timeouts.h"
 #else
 #include "btstack_run_loop_freertos.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "event_groups.h"
 #endif
 
 /* Short name used for netif in lwIP */
@@ -171,7 +175,7 @@ static void bnep_lwip_free_pbuf(struct pbuf * p){
 }
 
 static void bnep_lwip_outgoing_packet_processed(void){
-    // free pbuf 
+    // free pbuf
     bnep_lwip_free_pbuf(bnep_lwip_outgoing_next_packet);
     // mark as done
     bnep_lwip_outgoing_next_packet = NULL;
@@ -205,7 +209,7 @@ static void bnep_lwip_trigger_outgoing_process(void){
 
 static err_t low_level_output( struct netif *netif, struct pbuf *p ){
     UNUSED(netif);
-    
+
     log_info("low_level_output: packet %p, len %u, total len %u ", p, p->len, p->tot_len);
 
     // bnep up?
@@ -404,25 +408,25 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
     UNUSED(channel);
 
     bd_addr_t local_addr;
-  
+
     switch (packet_type) {
         case HCI_EVENT_PACKET:
-            switch (hci_event_packet_get_type(packet)) {            
+            switch (hci_event_packet_get_type(packet)) {
 
-                /* @text BNEP_EVENT_CHANNEL_OPENED is received after a BNEP connection was established or 
+                /* @text BNEP_EVENT_CHANNEL_OPENED is received after a BNEP connection was established or
                  * or when the connection fails. The status field returns the error code.
-                 * 
-                 * The TAP network interface is then configured. A data source is set up and registered with the 
+                 *
+                 * The TAP network interface is then configured. A data source is set up and registered with the
                  * run loop to receive Ethernet packets from the TAP interface.
                  *
                  * The event contains both the source and destination UUIDs, as well as the MTU for this connection and
                  * the BNEP Channel ID, which is used for sending Ethernet packets over BNEP.
-                 */  
+                 */
                 case BNEP_EVENT_CHANNEL_OPENED:
                     if (bnep_event_channel_opened_get_status(packet) != 0) break;
 
                     bnep_cid = bnep_event_channel_opened_get_bnep_cid(packet);
-                    
+
                     /* Setup network interface */
                     gap_local_bd_addr(local_addr);
                     bnep_lwip_netif_up(local_addr);
@@ -434,7 +438,7 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
                     btstack_run_loop_add_timer(&bnep_lwip_timer);
 #endif
                     break;
-                
+
                 /* @text BNEP_EVENT_CHANNEL_CLOSED is received when the connection gets closed.
                  */
                 case BNEP_EVENT_CHANNEL_CLOSED:
@@ -445,14 +449,14 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
                     bnep_lwip_netif_down();
                     break;
 
-                /* @text BNEP_EVENT_CAN_SEND_NOW indicates that a new packet can be send. This triggers the send of a 
+                /* @text BNEP_EVENT_CAN_SEND_NOW indicates that a new packet can be send. This triggers the send of a
                  * stored network packet. The tap datas source can be enabled again
                  */
                 case BNEP_EVENT_CAN_SEND_NOW:
                     bnep_lwip_send_packet();
                     bnep_lwip_packet_sent();
                     break;
-                    
+
                 default:
                     break;
             }
@@ -465,8 +469,8 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
             if (bnep_cid == 0) break;
             // Write out the ethernet frame to the network interface
             bnep_lwip_netif_process_packet(packet, size);
-            break;            
-            
+            break;
+
         default:
             break;
     }
@@ -522,7 +526,7 @@ void bnep_lwip_register_packet_handler(btstack_packet_handler_t handler){
 /**
  * @brief Register BNEP service
  * @brief Same as benp_register_service, but bnep lwip adapter handles all events
- * @param service_uuid 
+ * @param service_uuid
  * @Param max_frame_size
  */
 uint8_t bnep_lwip_register_service(uint16_t service_uuid, uint16_t max_frame_size){
