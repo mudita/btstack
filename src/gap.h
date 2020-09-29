@@ -594,6 +594,11 @@ int gap_inquiry_start(uint8_t duration_in_1280ms_units);
 int gap_inquiry_stop(void);
 
 /**
+ * @brief Forces Stop GAP Classic Inquiry
+ * @events: GAP_EVENT_INQUIRY_COMPLETE
+ */
+void gap_inquiry_force_stop(void);
+/**
  * @brief Remote Name Request
  * @param addr
  * @param page_scan_repetition_mode

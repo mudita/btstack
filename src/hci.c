@@ -110,6 +110,7 @@
 #define GAP_INQUIRY_STATE_IDLE 0
 #define GAP_INQUIRY_STATE_W2_CANCEL 0x81
 #define GAP_INQUIRY_STATE_W4_CANCELLED 0x82
+#define GAP_INQUIRY_STATE_STOP_REQUEST 0xff
 
 // GAP Remote Name Request
 #define GAP_REMOTE_NAME_STATE_IDLE 0
@@ -5319,7 +5320,15 @@ int gap_inquiry_stop(void){
     hci_stack->inquiry_state = GAP_INQUIRY_STATE_W2_CANCEL;
     hci_run();
     return 0;
-}    
+}
+
+void gap_inquiry_force_stop(void)
+{
+    hci_stack->inquiry_state = GAP_INQUIRY_STATE_STOP_REQUEST;
+    hci_run();
+    hci_stack->inquiry_state = GAP_INQUIRY_STATE_IDLE;
+    hci_run();
+}
 
 
 /**
