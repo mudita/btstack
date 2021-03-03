@@ -3481,7 +3481,7 @@ void hci_close(void){
         hci_stack->link_key_db->close();
     }
 #endif
-    
+
     btstack_linked_list_iterator_t lit;
     btstack_linked_list_iterator_init(&lit, &hci_stack->connections);
     while (btstack_linked_list_iterator_has_next(&lit)){
@@ -6210,8 +6210,16 @@ int gap_inquiry_stop(void){
     return 0;
 }
 
-void gap_inquiry_set_lap(uint32_t lap){
+void gap_inquiry_set_lap(uint32_t lap)
+{
     hci_stack->inquiry_lap = lap;
+}
+int gap_inquiry_force_stop(void)
+{
+    gap_inquiry_stop();
+    hci_stack->inquiry_state = GAP_INQUIRY_STATE_IDLE;
+    hci_run();
+    return 0;
 }
 
 
